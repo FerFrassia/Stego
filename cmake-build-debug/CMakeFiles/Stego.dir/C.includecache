@@ -17,6 +17,8 @@ errno.h
 -
 string.h
 -
+math.h
+-
 libbmp.h
 /Users/fer/Downloads/Workspace/Stego/libbmp.h
 zlib.h

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <math.h>
 #include "libbmp.h"
 #include "zlib.h"
 
@@ -46,8 +47,6 @@ void readFirstNumber(char* fileName, int* numberOfChars) {
 
     if (fscanf(fp, "%d", numberOfChars) != 1) {
         printf("failed: fscanf numberOfChars, errno = %d\n", errno);
-    } else {
-        printf("success: number of chars = %d\n", *numberOfChars);
     }
 
     fclose(fp);
@@ -93,9 +92,33 @@ void readText(char* fileName, char text[]) {
 void openImage(char* imageName, bmp_img* inputImg) {
     if (bmp_img_read(inputImg, imageName) != BMP_OK) {
         printf("failure: opening input image\n");
-    } else {
-        printf("success: opened input image\n");
     }
+}
+
+/*!
+@method determineMinAmountOfLSB
+@abstract Determines the minimum amount of Least Significant Bits required to encode the chars in the image.
+Returns -1 if the image is not large enough to encode the image.
+@params inputImgName: The name of the image to check as container.
+@params numberOfChars: The amount of chars to check as source.
+*/
+int determineMinAmountOfLSB(char* inputImgName, unsigned int numberOfChars) {
+    bmp_img* inputImg = malloc(sizeof(bmp_img));
+    openImage(inputImgName, inputImg);
+
+    double dChars = (double)numberOfChars;
+    double imgSize = (double)inputImg->img_header.biSizeImage;
+
+    int minLSB = -1;
+    for (double i = 1; i <= 8; ++i) {
+        if (imgSize >= ceil(dChars/i*8)) {
+            minLSB = i;
+            break;
+        }
+    }
+
+    free(inputImg);
+    return minLSB;
 }
 
 /*!
@@ -112,12 +135,6 @@ If not, it exits with a failure message.
 void writeStegoInLeastSignificantBit(char* inputName, char* outputName, unsigned int numberOfChars, char* text) {
     bmp_img* inputImg = malloc(sizeof(bmp_img));
     openImage(inputName, inputImg);
-
-    //check for enough space
-    if (inputImg->img_header.biSizeImage < numberOfChars*8) {
-        printf("fatal: not enough space in image\n");
-        exit(EXIT_FAILURE);
-    }
 
     //write numberOfChars
     unsigned char *currentChannel = (unsigned char*)(*(inputImg->img_pixels));
@@ -160,7 +177,18 @@ void writeStego(char* inputText, char* inputImg, char* outputImg) {
     char* text = malloc(sizeof(char)*amountOfChars);
     readText(inputText, text);
 
-    writeStegoInLeastSignificantBit(inputImg, outputImg, amountOfChars, text);
+    int minLSB = determineMinAmountOfLSB(inputImg, amountOfChars);
+    switch (minLSB) {
+        case -1:
+            printf("fatal: not enough space in image\n");
+            exit(EXIT_FAILURE);
+        case 1:
+            writeStegoInLeastSignificantBit(inputImg, outputImg, amountOfChars, text);
+            break;
+        default:
+            printf("writeStego with amount of significant bits:%d - not implemented\n", minLSB);
+            exit(EXIT_FAILURE);
+    }
     free(text);
 }
 
