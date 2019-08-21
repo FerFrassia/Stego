@@ -7,228 +7,319 @@
 #include "zlib.h"
 
 
-#define INPUT_TEXT "/Users/fer/Downloads/Workspace/Stego/input.txt"
-#define OUTPUT_TEXT "/Users/fer/Downloads/Workspace/Stego/output.txt"
-#define INPUT_IMG "/Users/fer/Downloads/Workspace/Stego/input.bmp"
-#define OUTPUT_IMG "/Users/fer/Downloads/Workspace/Stego/output.bmp"
-
-
 /*!
-@method createFileAndWrite.
-@abstract Creates a file with name fileName and writes the chars from text in it.
+@method create_file_and_write.
+@abstract Creates a file with name file_path and writes the chars from text in it.
 Returns a pointer to the created file.
-@param fileName: Name of the file to create.
+@param file_path: The path of the file to create.
 @param text: Text to write in the file.
 */
-FILE* createFileAndWrite(char* fileName, char* text) {
+FILE* create_file_and_write(char* file_path, char* text) {
+
     FILE* fp;
-    if ((fp = fopen(fileName, "w")) == NULL) {
-        printf("failed: createFileAndWrite, errno = %d\n", errno);
+    if ((fp = fopen(file_path, "w")) == NULL) {
+        printf("failed: create_file_and_write, errno = %d\n", errno);
         exit(EXIT_FAILURE);
     }
+
     fprintf(fp, "%s", text);
     fclose(fp);
     return fp;
 }
 
-/*!
-@method readFirstNumber.
-@abstract Opens the file, reads the first line and writes it in numberOfChars.
-@param fileName: The name of the file to open.
-@param numberOfChars: The variable to write the number of chars in the file.
-@discussion The number written in the file does not count itself.
-*/
-void readFirstNumber(char* fileName, int* numberOfChars) {
-    FILE *fp;
-    if ((fp = fopen(fileName, "r")) == NULL) {
-        printf("failed: fopen, errno = %d\n", errno);
-        return;
-    }
-
-    if (fscanf(fp, "%d", numberOfChars) != 1) {
-        printf("failed: fscanf numberOfChars, errno = %d\n", errno);
-    }
-
-    fclose(fp);
-}
 
 /*!
-@method readText.
+@method read_text.
 @abstract Opens the text file and writes it's contents in the variable text.
-@param fileName: The name of the file to open.
+Returns the size of the text.
+@param file_path: The path of the file to open.
 @param text: The variable in which to write to content of the file.
+@param amount_of_chars: The amount of characters to read from the text.
 @discussion Skips the first line because the text starts at the second line.
 */
-void readText(char* fileName, char text[]) {
+unsigned int read_text(char* file_path, char* text, unsigned int amount_of_chars) {
+
     FILE *fp;
-    if ((fp = fopen(fileName, "r")) == NULL) {
+    if ((fp = fopen(file_path, "r")) == NULL) {
         printf("failed: fopen, errno = %d\n", errno);
-        return;
+        return 0;
     }
 
-    //skip the first line
-    fgets(text, 800, fp);
-
-    char buffer[100];
-    int textIndex = 0;
+    unsigned int buffer_size = 100;
+    char buffer[buffer_size];
+    unsigned int text_index  = 0;
     while (fgets(buffer, sizeof(buffer)+sizeof(char), fp) != NULL) {
+
         int i = 0;
-        while (buffer[i] != '\0') {
-            text[textIndex] = buffer[i];
-            ++textIndex;
+        while (buffer[i] != '\0' && text_index < amount_of_chars-1) {
+            text[text_index] = buffer[i];
+            ++text_index;
             ++i;
         }
+
     }
 
     fclose(fp);
+    return text_index;
 }
 
+
 /*!
-@method openImage.
+@method open_image.
 @abstract Opens the image file.
-@param imageName: The name of the image to open.
-@param inputImg: The pointer that will point to the start of the image file.
+@param image_path: The path of the image to open.
+@param input_img: The pointer that will point to the start of the image file.
 */
-void openImage(char* imageName, bmp_img* inputImg) {
-    if (bmp_img_read(inputImg, imageName) != BMP_OK) {
+void open_image(char* image_path, bmp_img* input_img) {
+
+    if (bmp_img_read(input_img, image_path) != BMP_OK) {
         printf("failure: opening input image\n");
     }
 }
 
+
 /*!
-@method determineMinAmountOfLSB
+@method determine_min_amount_of_lsb
 @abstract Determines the minimum amount of Least Significant Bits required to encode the chars in the image.
 Returns -1 if the image is not large enough to encode the image.
-@params inputImgName: The name of the image to check as container.
-@params numberOfChars: The amount of chars to check as source.
+@params input_img_path: The name of the image to check as container.
+@params number_of_chars: The amount of chars to check as source.
 */
-int determineMinAmountOfLSB(char* inputImgName, unsigned int numberOfChars) {
-    bmp_img* inputImg = malloc(sizeof(bmp_img));
-    openImage(inputImgName, inputImg);
+int determine_min_amount_of_lsb(char* input_img_path, unsigned int number_of_chars) {
 
-    double dChars = (double)numberOfChars;
-    double imgSize = (double)inputImg->img_header.biSizeImage;
+    bmp_img* input_img = malloc(sizeof(bmp_img));
+    open_image(input_img_path, input_img);
 
-    int minLSB = -1;
+    double d_chars  = (double)number_of_chars;
+    double img_size = (double)input_img->img_header.biSizeImage;
+
+    int min_lsb = -1;
     for (double i = 1; i <= 8; ++i) {
-        if (imgSize >= ceil(dChars/i*8)) {
-            minLSB = i;
+        if (img_size >= ceil( (d_chars/i)*8) ) {
+            min_lsb = i;
             break;
         }
     }
 
-    free(inputImg);
-    return minLSB;
+    free(input_img);
+    return min_lsb;
 }
 
+
 /*!
-@method writeStegoInLeastSignificant.
+@method bit_mask_byte.
+@abstract Generates a bitmask with the k least significant bits set to 1.
+Returns a char with the generated bitmask.
+@param k: The number of least significant bits to set to 1.
+*/
+unsigned char bit_mask_byte(unsigned int k) {
+
+    unsigned char bit_mask_char = 0x00;
+    for (int i = 0; i < k; ++i) {
+        bit_mask_char = bit_mask_char | (0x01 << i);
+    }
+
+    return bit_mask_char;
+}
+
+
+/*!
+@method write_stegoInLeastSignificant.
 @abstract Opens the original image, and creates a stego image by copying the original image and writting the text in the least
 significant bit of every byte (this will represent a RGB channel).
-@param inputName: The name of the original image.
-@param outputName: The name of the stego image to create.
-@param numberOfChars: The metadata representing the amount of chars that will be written after it.
+@param inputName: The path of the original image.
+@param outputName: The path of the stego image to create.
+@param number_of_chars: The metadata representing the amount of chars that will be written after it.
 @param text: The text to write.
+@param k: Number of LSBs to use.
 @discussion This method first checks if the stego image to create will be large enough to hold the entire text.
 If not, it exits with a failure message.
 */
-void writeStegoInLeastSignificantBit(char* inputName, char* outputName, unsigned int numberOfChars, char* text) {
-    bmp_img* inputImg = malloc(sizeof(bmp_img));
-    openImage(inputName, inputImg);
+void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, char* text, unsigned int k) {
 
-    //write numberOfChars
-    unsigned char *currentChannel = (unsigned char*)(*(inputImg->img_pixels));
-    unsigned int shiftableNumberOfChars = numberOfChars;
-    for (int bit = 31; bit >= 0; --bit) {
-        unsigned char bitCurrentNumber = (shiftableNumberOfChars >> bit) & 0x01;
-        unsigned char originalChannel = *currentChannel;
-        unsigned char modifiedChannel = (originalChannel & 0xfe) | bitCurrentNumber;
-        *currentChannel = modifiedChannel;
-        currentChannel += 1;
-    }
+    bmp_img* input_img = malloc(sizeof(bmp_img));
+    open_image(input_img_path, input_img);
 
-    //write text
-    for (int i = 0; i < numberOfChars; ++i) {
-        char currentChar = text[i];
-        for (int bitOffset = 0; bitOffset < 8; ++bitOffset) {
-            unsigned char bitCurrentChar = (currentChar >> (8-bitOffset-1)) & 0x01;
-            unsigned char originalChannel = *currentChannel;
-            unsigned char modifiedChannel = (originalChannel & 0xfe) | bitCurrentChar;
-            *currentChannel = modifiedChannel;
-            currentChannel += 1;
+    //Split the number of chars into four chunks of one byte
+    unsigned char bytes_to_store[4];
+    bytes_to_store[0] = (unsigned char)((number_of_chars >> 24) & 0xFF);
+    bytes_to_store[1] = (unsigned char)((number_of_chars >> 16) & 0xFF);
+    bytes_to_store[2] = (unsigned char)((number_of_chars >> 8) & 0xFF);
+    bytes_to_store[3] = (unsigned char)(number_of_chars & 0xFF);
+
+    unsigned char *current_channel = (unsigned char*)(*(input_img->img_pixels));
+    unsigned char bit_mask_char    = bit_mask_byte(1);
+    unsigned char bit_mask_channel = ~(bit_mask_char << (k-1)); //This is NOT(bit_mask_byte << k-1)
+
+    unsigned char bit_current_number = 0;
+    unsigned char original_channel   = 0;
+    unsigned char modified_channel   = 0;
+    unsigned int lsb_used = 0;
+
+    //Write number of chars
+    for (int i = 0; i < 4; ++i) {
+        char current_char = bytes_to_store[i];
+        for (int j = 7; j >= 0; --j) {
+
+            bit_current_number = (current_char >> j) & (bit_mask_char);
+            original_channel   = *current_channel;
+            modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
+            *current_channel   = modified_channel;
+
+            lsb_used++;
+            if (lsb_used >= k) {
+                current_channel += 1;
+                lsb_used = 0;
+            }
+            bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
         }
     }
 
-    bmp_img_write(inputImg, outputName);
-    free(inputImg);
+    //Write text
+    for (int i = 0; i < number_of_chars; ++i) {
+        char current_char = text[i];
+        for (int j = 7; j >= 0; --j) {
+
+            bit_current_number = (current_char >> j) & (bit_mask_char);
+            original_channel   = *current_channel;
+            modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
+            *current_channel   = modified_channel;
+
+            lsb_used++;
+            if (lsb_used >= k) {
+                current_channel += 1;
+                lsb_used = 0;
+            }
+            bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
+        }
+    }
+
+    //Store image
+    bmp_img_write(input_img, output_img_path);
+    free(input_img);
 }
 
+
 /*!
-@method writeStego.
-@abstract Creates a stego image (outputImg) by hiding the text from inputText and hiding it in inputImg.
-@params inputText: The name of the text file to hide.
-@params inputImg: The name of the image file to use as container.
-@params outputImg: The name of the stego image to create.
+@method read_stego.
+@abstract Opens the stego image, recovers the text encoded in the last significant bit of the concerning bytes,
+and creates a text file with it.
+@param stegoName: The path of the stego image.
+@param outputTextName: The path of the text file to create with the stego text Extracted.
+@param k: Number of LSBs to use.
 */
-void writeStego(char* inputText, char* inputImg, char* outputImg) {
-    int amountOfChars;
-    readFirstNumber(inputText, &amountOfChars);
+void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 
-    char* text = malloc(sizeof(char)*amountOfChars);
-    readText(inputText, text);
+    bmp_img *stego_img = malloc(sizeof(bmp_img));
+    open_image(stego_img_path, stego_img);
 
-    int minLSB = determineMinAmountOfLSB(inputImg, amountOfChars);
-    switch (minLSB) {
+    //Extract the number of characters to read;
+    unsigned char bytes_extracted[4];
+    unsigned char *current_channel = (unsigned char*)(*(stego_img->img_pixels));
+    unsigned char bit_mask_char = bit_mask_byte(1);
+
+    unsigned char current_char = 0;
+    unsigned char current_bits = 0;
+    unsigned int lsb_used = 0;
+
+    for (int i = 0; i < 4; ++i) {
+
+        current_char = 0;
+        for (int j = 7; j >= 0; --j) {
+
+            current_bits = (*current_channel >> (k-1-lsb_used)) & bit_mask_char;
+            current_bits = current_bits << j;
+            current_char = current_char | current_bits;
+
+            lsb_used++;
+            if (lsb_used >= k) {
+                current_channel += 1;
+                lsb_used = 0;
+                bit_mask_char = bit_mask_byte(1);
+            }
+        }
+        bytes_extracted[i] = current_char;
+    }
+    unsigned int amount_of_chars = ((unsigned int)bytes_extracted[0] << 24) | ((unsigned int)bytes_extracted[1] << 16) | ((unsigned int)bytes_extracted[2] << 8) | (unsigned int)bytes_extracted[3];
+
+
+    //Debug text
+    printf("\n.......text extracted.......\n\n");
+    //
+
+    //Read text
+    char text[amount_of_chars+1];
+
+    for (int i = 0; i < amount_of_chars; ++i) {
+
+        current_char = 0;
+        for (int j = 7; j >= 0; --j) {
+
+            current_bits = (*current_channel >> (k-1-lsb_used)) & bit_mask_char;
+            current_bits = current_bits << j;
+            current_char = current_char | current_bits;
+
+            lsb_used++;
+            if (lsb_used >= k) {
+                current_channel += 1;
+                lsb_used = 0;
+                bit_mask_char = bit_mask_byte(1);
+            }
+        }
+        text[i] = current_char;
+        //Debug text
+        printf("%c", text[i]);
+        //
+    }
+    text[amount_of_chars] = '\0';
+
+    //Debug text
+    printf("\n.......output preview.......\n\n");
+    printf("%s\n", text);
+    //
+
+    //Store text
+    create_file_and_write(outputTextPath, text);
+    free(stego_img);
+}
+
+
+/*!
+@method write_stego.
+@abstract Creates a stego image (outputImg) by hiding the text from inputText and hiding it in input_img.
+@params inputText: The path of the text file to hide.
+@params input_img: The path of the image file to use as container.
+@params outputImg: The path of the stego image to create.
+@params amount_of_chars: The amount of characters to hide.
+@param k: Number of LSBs to use.
+*/
+void write_stego(char* inputText, char* input_img, char* outputImg, unsigned int amount_of_chars, unsigned int k) {
+
+    char* text = malloc(sizeof(char)*(amount_of_chars+1));
+    unsigned int text_size = read_text(inputText, text, amount_of_chars);
+    text[amount_of_chars] = '\0';
+
+    int min_lsb = determine_min_amount_of_lsb(input_img, amount_of_chars);
+
+    switch (min_lsb) {
         case -1:
             printf("fatal: not enough space in image\n");
             exit(EXIT_FAILURE);
         case 1:
-            writeStegoInLeastSignificantBit(inputImg, outputImg, amountOfChars, text);
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            write_stego_in_lbs(input_img, outputImg, text_size, text, k);
             break;
         default:
-            printf("writeStego with amount of significant bits:%d - not implemented\n", minLSB);
+            printf("write_stego with amount of significant bits:%d - not implemented\n", min_lsb);
             exit(EXIT_FAILURE);
     }
     free(text);
-}
-
-/*!
-@method readStego.
-@abstract Opens the stego image, recovers the text encoded in the last significant bit of the concerning bytes,
-and creates a text file with it.
-@param stegoName: The name of the stego image.
-@param outputTextName: The name of the text file to create with the stego text recovered.
-*/
-void readStego(char* stegoName, char* outputTextName) {
-    bmp_img *stegoImg = malloc(sizeof(bmp_img));
-    openImage(stegoName, stegoImg);
-
-    unsigned char* currentChannel = (unsigned char*)(*(stegoImg->img_pixels));
-
-    //recover amount of chars to read;
-    int amountOfChars = 0;
-    for (int bit = 31; bit >= 0; --bit) {
-        int currentBit = *currentChannel & 0x01;
-        currentBit = currentBit << bit;
-        amountOfChars = amountOfChars | currentBit;
-        currentChannel += 1;
-    }
-
-    //read chars
-    char text[amountOfChars];
-    for(int i = 0; i < amountOfChars; ++i) {
-        char currentChar = 0;
-        for (int bit = 7; bit >= 0; --bit) {
-            int currentBit = *currentChannel & 0x01;
-            currentBit = currentBit << bit;
-            currentChar = currentChar | currentBit;
-            currentChannel += 1;
-        }
-        text[i] = currentChar;
-    }
-
-    createFileAndWrite(outputTextName, text);
-    free(stegoImg);
 }
 
 
@@ -236,9 +327,39 @@ void readStego(char* stegoName, char* outputTextName) {
 @method main.
 @abstract Creates a stego image (OUTPUT_IMG) by hiding the text from INPUT_TEXT in INPUT_IMG.
 Then recovers the hidden text from OUTPUT_IMG and writes it in OUTPUT_TEXT.
+@param argv[1]: The number of LSBs to use.
+@param argv[2]: The amount of characters to hide.
+@param argv[3]: The path of the text to hide.
+@param argv[4]: The path of the image to use as container.
+@param argv[5]: The path of the output text.
+@param argv[6]: The path of the output image.
 */
-int main() {
-    writeStego(INPUT_TEXT, INPUT_IMG, OUTPUT_IMG);
-    readStego(OUTPUT_IMG, OUTPUT_TEXT);
+int main(int argc, char **argv) {
+
+    if (argc < 7) {
+        printf("Missing arguments.\n");
+        exit(-1);
+    }
+
+    unsigned int k = atoi(argv[1]);
+    if (k < 0 || k > 8) {
+        printf("Invalid number of LSBs to use.\n");
+        exit(-1);
+    }
+
+    unsigned int amount_of_chars = atoi(argv[2]);
+    if (k < 0) {
+        printf("Invalid amount of characters to hide.\n");
+        exit(-1);
+    }
+
+    char* input_text_path  = argv[3];
+    char* imput_img_path   = argv[4];
+    char* output_text_path = argv[5];
+    char* output_img_path  = argv[6];
+
+    write_stego(input_text_path, imput_img_path, output_img_path, amount_of_chars, k);
+    read_stego(output_img_path, output_text_path, k);
+
     return 0;
 }
