@@ -322,6 +322,40 @@ void write_stego(char* inputText, char* input_img, char* outputImg, unsigned int
     free(text);
 }
 
+/*!
+@method determine_mean_squared_error between 2 images
+@abstract estimate the average of the squares of the errors of the chars in the images.
+Returns MSE.
+@params input_img_path: The name of the image to compare.
+@params input_img_path2: The name of the second image to compare.
+@params number_of_chars: The amount of chars to check as source.
+*/
+int determine_mean_squared_error(char* input_img_path, char* input_img_path_2, unsigned int number_of_chars) {
+
+    bmp_img* input_img = malloc(sizeof(bmp_img));
+    open_image(input_img_path, input_img);
+
+    bmp_img* input_img_2 = malloc(sizeof(bmp_img));
+    open_image(input_img_path_2, input_img_2);
+
+    double d_chars  = (double)number_of_chars;
+    double img_size = (double)input_img->img_header.biSizeImage;
+
+    int min_lsb = -1;
+    for (double i = 1; i <= 8; ++i) {
+        if (img_size >= ceil( (d_chars/i)*8) ) {
+            min_lsb = i;
+            break;
+        }
+    }
+
+    free(input_img);
+    return min_lsb;
+}
+
+
+
+
 
 /*!
 @method main.
