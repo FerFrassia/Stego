@@ -361,6 +361,22 @@ double determine_mean_squared_error(char* input_img_path, char* input_img_path_2
 }
 
 
+/*!
+@method determine_PSNR between 2 images
+@abstract estimate PSNR of the images images.
+Returns MSE.
+@params input_img_path: The name of the image to compare.
+@params input_img_path2: The name of the second image to compare.
+@params number_of_chars: The amount of chars to check as source.
+ */
+double determine_PSNR(char* input_img_path, char* input_img_path_2, unsigned int number_of_chars) {
+
+    double mse = determine_mean_squared_error(input_img_path, input_img_path_2, number_of_chars);
+    double peak_signalToNoise_ratio = 20 * log10(255) - 10 * log10(mse);
+    return peak_signalToNoise_ratio;
+}
+
+
 
 
 
