@@ -330,7 +330,7 @@ Returns MSE.
 @params input_img_path2: The name of the second image to compare.
 @params number_of_chars: The amount of chars to check as source.
 */
-int determine_mean_squared_error(char* input_img_path, char* input_img_path_2, unsigned int number_of_chars) {
+double determine_mean_squared_error(char* input_img_path, char* input_img_path_2, unsigned int number_of_chars) {
 
     bmp_img* input_img = malloc(sizeof(bmp_img));
     open_image(input_img_path, input_img);
@@ -340,17 +340,24 @@ int determine_mean_squared_error(char* input_img_path, char* input_img_path_2, u
 
     double d_chars  = (double)number_of_chars;
     double img_size = (double)input_img->img_header.biSizeImage;
+    double mean_squared_error = 0;
 
-    int min_lsb = -1;
-    for (double i = 1; i <= 8; ++i) {
-        if (img_size >= ceil( (d_chars/i)*8) ) {
-            min_lsb = i;
-            break;
-        }
+
+    for (size_t i = 0; i < img_size; i++){
+        double blue_difference = ((double) (*(input_img->img_pixels[i])).blue - (*(input_img_2->img_pixels[i])).blue);
+        blue_difference *= blue_difference;
+        double green_difference = ((double) (*(input_img->img_pixels[i])).green - (*(input_img_2->img_pixels[i])).green);
+        green_difference *= green_difference;
+        double red_difference = ((double) (*(input_img->img_pixels[i])).red - (*(input_img_2->img_pixels[i])).red);
+        red_difference *= red_difference;
+        mean_squared_error += blue_difference + green_difference + red_difference;
     }
+    
+    mean_squared_error /= img_size*3;
 
     free(input_img);
-    return min_lsb;
+    free(input_img_2);
+    return mean_squared_error;
 }
 
 
