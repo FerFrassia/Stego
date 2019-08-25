@@ -62,12 +62,12 @@ unsigned int read_text(char* file_path, unsigned char* text, unsigned int amount
 }
 
 /*!
-@method read_stego.
-@abstract Opens the stego image, recovers the text encoded in the last significant bit of the concerning bytes,
+@method read_stego_from_file.
+@abstract Opens the stego image, recovers the text encoded in the least significant bit of the concerning bytes,
 and creates a text file with it.
 @param stegoName: The path of the stego image.
-@param outputTextName: The path of the text file to create with the stego text Extracted.
-@param k: Number of LSBs to use.
+@param outputTextName: The path of the text file to create with the stego text extracted.
+@param lsb_to_use: Number of LSBs to use.
 */
 void read_stego_from_file(
     char* stego_img_path,
@@ -87,13 +87,14 @@ void read_stego_from_file(
 }
 
 /*!
-@method write_stego.
-@abstract Creates a stego image (outputImg) by hiding the text from inputText and hiding it in input_img.
-@params inputText: The path of the text file to hide.
-@params input_img: The path of the image file to use as container.
-@params outputImg: The path of the stego image to create.
+@method write_stego_to_file.
+@abstract Creates a stego image by hiding text in a cover image.
+@params input_text_path: The path of the text file to hide.
+@params cover_img_path: The path of the image file to use as container.
+@params stego_img_path: The path of the stego image to create.
 @params amount_of_chars: The amount of characters to hide.
-@param k: Number of LSBs to use.
+@param max_lsb_to_use: Maximum number of LSBs to use.
+@return The amount of LSB actually used to hide the text into the image.
 */
 unsigned int write_stego_to_file(
     char* input_text_path,
@@ -134,7 +135,6 @@ Then recovers the hidden text from OUTPUT_IMG and writes it in OUTPUT_TEXT.
 @param argv[6]: The path of the output image.
 */
 int main(int argc, char **argv) {
-
     if (argc < 7) {
         printf("Missing arguments.\n");
         exit(-1);
