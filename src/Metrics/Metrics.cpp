@@ -10,8 +10,8 @@ Returns MSE.
 @params number_of_chars: The amount of chars to check as source.
 */
 double Metrics::determine_mean_squared_error(
-  BMPImage input_img,
-  BMPImage input_img_2,
+  BMPImage &input_img,
+  BMPImage &input_img_2,
   unsigned int number_of_chars
 ) {
     double d_chars  = (double) number_of_chars;
@@ -48,8 +48,8 @@ Returns MSE.
 @params number_of_chars: The amount of chars to check as source.
  */
 double Metrics::determine_PSNR(
-  BMPImage input_img,
-  BMPImage input_img_2,
+  BMPImage &input_img,
+  BMPImage &input_img_2,
   unsigned int number_of_chars
 ) {
     double mse = determine_mean_squared_error(input_img, input_img_2, number_of_chars);
