@@ -1,27 +1,40 @@
 CC=gcc
+CXX=g++
 LD=ld
 RM=rm -f
 CFLAGS=-g -Wall
+CPPLAGS=-g -Wall
 LDFLAGS=-g -lm
 
-SRCS=main.c libbmp.c
-OBJS=$(subst .c,.o,$(SRCS))
+CPPSRCS=main.cpp BMPImage.cpp
+CPPOBJS=$(subst .cpp,.o,$(CPPSRCS))
+
+CSRCS=libbmp.c
+COBJS=$(subst .c,.o,$(CSRCS))
 
 all: stego
 
-stego: $(OBJS)
-		$(CC) $(CFLAGS) -o stego $(OBJS) $(LDFLAGS)
+stego: $(CPPOBJS) $(COBJS)
+		$(CXX) $(CPPFLAGS) -o stego $(CPPOBJS) $(COBJS) $(LDFLAGS)
 
-depend: .depend
+cdepend: .cdepend
 
-.depend: $(SRCS)
-		$(RM) ./.depend
-		$(CC) $(CFLAGS) -MM $^>>./.depend;
+.cdepend: $(CSRCS)
+		$(RM) ./.cdepend
+		$(CC) $(CFLAGS) -MM $^>>./.cdepend;
+
+cppdepend: .cppdepend
+
+.cppdepend: $(CPPSRCS)
+		$(RM) ./.cppdepend
+		$(CXX) $(CPPFLAGS) -MM $^>>./.cppdepend;
 
 clean:
-		$(RM) $(OBJS)
+		$(RM) $(COBJS) $(CPPOBJS)
 
 distclean: clean
-		$(RM) *~ .depend
+		$(RM) *~ .cdepend
+		$(RM) *~ .cppdepend
 
-include .depend
+include .cdepend
+include .cppdepend

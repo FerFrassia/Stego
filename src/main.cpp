@@ -4,8 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include "libbmp.h"
-#include "zlib.h"
 
+#include "BMPImage.h"
 
 /*!
 @method create_file_and_write.
@@ -64,18 +64,7 @@ unsigned int read_text(char* file_path, char* text, unsigned int amount_of_chars
 }
 
 
-/*!
-@method open_image.
-@abstract Opens the image file.
-@param image_path: The path of the image to open.
-@param input_img: The pointer that will point to the start of the image file.
-*/
-void open_image(char* image_path, bmp_img* input_img) {
 
-    if (bmp_img_read(input_img, image_path) != BMP_OK) {
-        printf("failure: opening input image\n");
-    }
-}
 
 
 /*!
@@ -87,11 +76,10 @@ Returns -1 if the image is not large enough to encode the image.
 */
 int determine_min_amount_of_lsb(char* input_img_path, unsigned int number_of_chars) {
 
-    bmp_img* input_img = malloc(sizeof(bmp_img));
-    open_image(input_img_path, input_img);
+    BMPImage input_img = BMPImage(input_img_path);
 
     double d_chars  = (double)number_of_chars;
-    double img_size = (double)input_img->img_header.biSizeImage;
+    double img_size = (double)input_img.get_image_size();
 
     int min_lsb = -1;
     for (double i = 1; i <= 8; ++i) {
@@ -101,7 +89,6 @@ int determine_min_amount_of_lsb(char* input_img_path, unsigned int number_of_cha
         }
     }
 
-    free(input_img);
     return min_lsb;
 }
 
@@ -137,8 +124,7 @@ If not, it exits with a failure message.
 */
 void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, char* text, unsigned int k) {
 
-    bmp_img* input_img = malloc(sizeof(bmp_img));
-    open_image(input_img_path, input_img);
+    BMPImage input_image = BMPImage(input_img_path);
 
     //Split the number of chars into four chunks of one byte
     unsigned char bytes_to_store[4];
@@ -146,15 +132,6 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
     bytes_to_store[1] = (unsigned char)((number_of_chars >> 16) & 0xFF);
     bytes_to_store[2] = (unsigned char)((number_of_chars >> 8) & 0xFF);
     bytes_to_store[3] = (unsigned char)(number_of_chars & 0xFF);
-
-    // Amount of bytes per image row
-    unsigned int row_length = input_img->img_header.biWidth * sizeof(bmp_pixel);
-    // Row to which we are currently writing
-    unsigned int current_row = 0;
-    // Index of the byte in the current row we are going to write next
-    unsigned int current_byte = 0;
-    // Pointer to the next byte to write
-    unsigned char *current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
 
     unsigned char bit_mask_char    = bit_mask_byte(1);
     unsigned char bit_mask_channel = ~(bit_mask_char << (k-1)); //This is NOT(bit_mask_byte << k-1)
@@ -170,22 +147,13 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
         for (int j = 7; j >= 0; --j) {
 
             bit_current_number = (current_char >> j) & (bit_mask_char);
-            original_channel   = *current_channel;
+            original_channel   = input_image.read_byte();
             modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
-            *current_channel   = modified_channel;
+            input_image.write_byte(modified_channel);
 
             lsb_used++;
             if (lsb_used >= k) {
-                if (current_byte + 1 < row_length) {
-                    // If there are bytes left in this row, advance one byte
-                    current_byte += 1;
-                    current_channel += 1;
-                } else {
-                    // Otherwise go to the next row
-                    current_row += 1;
-                    current_byte = 0;
-                    current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
-                }
+                input_image.next_byte();
                 lsb_used = 0;
             }
             bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
@@ -198,22 +166,13 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
         for (int j = 7; j >= 0; --j) {
 
             bit_current_number = (current_char >> j) & (bit_mask_char);
-            original_channel   = *current_channel;
+            original_channel   = input_image.read_byte();
             modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
-            *current_channel   = modified_channel;
+            input_image.write_byte(modified_channel);
 
             lsb_used++;
             if (lsb_used >= k) {
-                if (current_byte + 1 < row_length) {
-                    // If there are bytes left in this row, advance one byte
-                    current_byte += 1;
-                    current_channel += 1;
-                } else {
-                    // Otherwise go to the next row
-                    current_row += 1;
-                    current_byte = 0;
-                    current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
-                }
+                input_image.next_byte();
                 lsb_used = 0;
             }
             bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
@@ -221,8 +180,7 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
     }
 
     //Store image
-    bmp_img_write(input_img, output_img_path);
-    free(input_img);
+    input_image.save_image(output_img_path);
 }
 
 
@@ -236,17 +194,7 @@ and creates a text file with it.
 */
 void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 
-    bmp_img *stego_img = malloc(sizeof(bmp_img));
-    open_image(stego_img_path, stego_img);
-
-    // Amount of bytes per image row
-    unsigned int row_length = stego_img->img_header.biWidth * sizeof(bmp_pixel);
-    // Row to which we are currently writing
-    unsigned int current_row = 0;
-    // Index of the byte in the current row we are going to write next
-    unsigned int current_byte = 0;
-    // Pointer to the next byte to write
-    unsigned char *current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
+    BMPImage stego_image = BMPImage(stego_img_path);
 
     //Extract the number of characters to read;
     unsigned char bytes_extracted[4];
@@ -261,22 +209,13 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
         current_char = 0;
         for (int j = 7; j >= 0; --j) {
 
-            current_bits = (*current_channel >> (k-1-lsb_used)) & bit_mask_char;
+            current_bits = (stego_image.read_byte() >> (k-1-lsb_used)) & bit_mask_char;
             current_bits = current_bits << j;
             current_char = current_char | current_bits;
 
             lsb_used++;
             if (lsb_used >= k) {
-                if (current_byte + 1 < row_length) {
-                    // If there are bytes left in this row, advance one byte
-                    current_byte += 1;
-                    current_channel += 1;
-                } else {
-                    // Otherwise go to the next row
-                    current_row += 1;
-                    current_byte = 0;
-                    current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
-                }
+                stego_image.next_byte();
                 lsb_used = 0;
                 bit_mask_char = bit_mask_byte(1);
             }
@@ -298,22 +237,13 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
         current_char = 0;
         for (int j = 7; j >= 0; --j) {
 
-            current_bits = (*current_channel >> (k-1-lsb_used)) & bit_mask_char;
+            current_bits = (stego_image.read_byte() >> (k-1-lsb_used)) & bit_mask_char;
             current_bits = current_bits << j;
             current_char = current_char | current_bits;
 
             lsb_used++;
             if (lsb_used >= k) {
-                if (current_byte + 1 < row_length) {
-                    // If there are bytes left in this row, advance one byte
-                    current_byte += 1;
-                    current_channel += 1;
-                } else {
-                    // Otherwise go to the next row
-                    current_row += 1;
-                    current_byte = 0;
-                    current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
-                }
+                stego_image.next_byte();
                 lsb_used = 0;
                 bit_mask_char = bit_mask_byte(1);
             }
@@ -332,7 +262,6 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 
     //Store text
     create_file_and_write(outputTextPath, text);
-    free(stego_img);
 }
 
 
@@ -347,7 +276,7 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 */
 void write_stego(char* inputText, char* input_img, char* outputImg, unsigned int amount_of_chars, unsigned int k) {
 
-    char* text = malloc(sizeof(char)*(amount_of_chars+1));
+    char* text = (char*)malloc(sizeof(char)*(amount_of_chars+1));
     unsigned int text_size = read_text(inputText, text, amount_of_chars);
     text[amount_of_chars] = '\0';
 
@@ -383,32 +312,30 @@ Returns MSE.
 @params number_of_chars: The amount of chars to check as source.
 */
 double determine_mean_squared_error(char* input_img_path, char* input_img_path_2, unsigned int number_of_chars) {
-
-    bmp_img* input_img = malloc(sizeof(bmp_img));
-    open_image(input_img_path, input_img);
-
-    bmp_img* input_img_2 = malloc(sizeof(bmp_img));
-    open_image(input_img_path_2, input_img_2);
+    BMPImage input_img = BMPImage(input_img_path);
+    BMPImage input_img_2 = BMPImage(input_img_path_2);
 
     double d_chars  = (double)number_of_chars;
-    double img_size = (double)input_img->img_header.biSizeImage;
+    double img_size = (double)input_img.get_image_size();
     double mean_squared_error = 0;
 
-
     for (size_t i = 0; i < img_size; i++){
-        double blue_difference = ((double) (*(input_img->img_pixels[i])).blue - (*(input_img_2->img_pixels[i])).blue);
+        bmp_pixel pixel = input_img.read_pixel();
+        bmp_pixel pixel_2 = input_img_2.read_pixel();
+
+        double blue_difference = ((double) pixel.blue - pixel_2.blue);
         blue_difference *= blue_difference;
-        double green_difference = ((double) (*(input_img->img_pixels[i])).green - (*(input_img_2->img_pixels[i])).green);
+        double green_difference = ((double) pixel.green - pixel_2.green);
         green_difference *= green_difference;
-        double red_difference = ((double) (*(input_img->img_pixels[i])).red - (*(input_img_2->img_pixels[i])).red);
+        double red_difference = ((double) pixel.red - pixel_2.red);
         red_difference *= red_difference;
         mean_squared_error += blue_difference + green_difference + red_difference;
+
+        input_img.next_pixel();
+        input_img_2.next_pixel();
     }
     
     mean_squared_error /= img_size*3;
-
-    free(input_img);
-    free(input_img_2);
     return mean_squared_error;
 }
 

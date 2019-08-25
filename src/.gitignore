@@ -55,4 +55,5 @@ dkms.conf
 stego
 
 # Auxiliary build files
-.depend
+.cdepend
+.cppdepend

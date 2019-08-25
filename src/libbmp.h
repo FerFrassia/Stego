@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __LIBBMP_H__
 #define __LIBBMP_H__
 
@@ -80,3 +84,7 @@ enum bmp_error  bmp_img_read                   (bmp_img*,
                                                 const char*);
 
 #endif /* __LIBBMP_H__ */
+
+#ifdef __cplusplus
+}
+#endif
