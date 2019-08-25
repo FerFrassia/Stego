@@ -7,11 +7,11 @@ namespace TextFileHandling {
   /*!
   @method create_file_and_write.
   @abstract Creates a file with name file_path and writes the chars from text in it.
-  Returns a pointer to the created file.
+  Returns the amount of bytes written.
   @param file_path: The path of the file to create.
   @param text: Text to write in the file.
   */
-  FILE* create_file_and_write(char* file_path, unsigned char* text);
+  int create_file_and_write(char* file_path, unsigned char* text);
 
   /*!
   @method read_text.

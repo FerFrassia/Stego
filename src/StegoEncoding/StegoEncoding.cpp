@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdint.h>
 
 #include "StegoEncoding.h"
 #include "../LSBStream/LSBWriter.h"
@@ -11,8 +12,8 @@ static int determine_min_amount_of_lsb(
   BMPImage &image,
   unsigned int number_of_chars
 );
-static void split_into_bytes(unsigned int number, unsigned char* bytes);
-static unsigned int join_bytes(unsigned char* bytes);
+static void split_into_bytes(uint32_t number, unsigned char* bytes);
+static uint32_t join_bytes(unsigned char* bytes);
 
 
 unsigned int StegoEncoding::write_stego(
@@ -90,16 +91,16 @@ int determine_min_amount_of_lsb(
     return min_lsb;
 }
 
-void split_into_bytes(unsigned int number, unsigned char* bytes) {
+void split_into_bytes(uint32_t number, unsigned char* bytes) {
   bytes[0] = (unsigned char)((number >> 24) & 0xFF);
     bytes[1] = (unsigned char)((number >> 16) & 0xFF);
     bytes[2] = (unsigned char)((number >> 8) & 0xFF);
     bytes[3] = (unsigned char)(number & 0xFF);
 }
 
-unsigned int join_bytes(unsigned char* bytes) {
-  return ((unsigned int)bytes[0] << 24)
-    | ((unsigned int)bytes[1] << 16)
-    | ((unsigned int)bytes[2] << 8)
-    | (unsigned int)bytes[3];
+uint32_t join_bytes(unsigned char* bytes) {
+  return ((uint32_t)bytes[0] << 24)
+    | ((uint32_t)bytes[1] << 16)
+    | ((uint32_t)bytes[2] << 8)
+    | (uint32_t)bytes[3];
 }

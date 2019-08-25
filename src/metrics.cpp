@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "A metric name should be provided.\n");
-    fprintf(stderr, "Valid metrics are: mse, psnr.\n");
+    fprintf(stderr, "Valid metrics are: mse, psnr, ssim.\n");
     return -1;
   }
   char* metric_name = argv[1];
@@ -29,14 +29,19 @@ int main(int argc, char **argv) {
     result = Metrics::determine_mean_squared_error(image, image_2, 0);
   }
   else if (strcmp(metric_name, "psnr") == 0) {
-    result =  Metrics::determine_PSNR(image, image_2, 0);
+    result = Metrics::determine_PSNR(image, image_2, 0);
+  }
+  else if (strcmp(metric_name, "ssim") == 0) {
+    // result = Metrics::determine_SSIM(image, image_2, 0);
+    fprintf(stderr, "Metric not implemented.\n");
+    return -1;
   }
   else {
     fprintf(stderr, "Invalid metric.\n");
-    fprintf(stderr, "Valid metrics are: mse, psnr.\n");
+    fprintf(stderr, "Valid metrics are: mse, psnr, ssim.\n");
     return -1;
   }
 
-  printf("%.3g\n", result);
+  printf("%.4g\n", result);
   return 0;
 }
