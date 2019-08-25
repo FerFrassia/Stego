@@ -12,6 +12,8 @@ namespace StegoEncoding {
   @param cover_img: The image where to hide the text.
   @param amount_of_chars: The metadata representing the amount of chars that will be written after it.
   @param max_lsb_to_use: Maximum number of LSBs to use.
+  @param force_max_lsb: If this is true, the maximum number of LSBs allowed will be used,
+  even if it is not necessary.
   @discussion This method first checks if the stego image to create will be large enough to hold the entire text.
   If not, it exits with a failure message.
   @return The number of LSBs actually used to hide the text.
@@ -20,7 +22,8 @@ namespace StegoEncoding {
     unsigned char* input_text,
     BMPImage &cover_img,
     unsigned int amount_of_chars,
-    unsigned int max_lsb_to_use
+    unsigned int max_lsb_to_use,
+    bool force_max_lsb
   );
 
   /*!

@@ -52,7 +52,8 @@ unsigned int write_stego_to_file(
     char* cover_img_path,
     char* stego_img_path,
     unsigned int amount_of_chars,
-    unsigned int max_lsb_to_use
+    unsigned int max_lsb_to_use,
+    bool force_max_lsb
 ) {
     unsigned char* input_text = (unsigned char*) malloc(sizeof(char)*(amount_of_chars+1));
     TextFileHandling::read_text(input_text_path, input_text, amount_of_chars);
@@ -64,7 +65,8 @@ unsigned int write_stego_to_file(
         input_text,
         cover_img,
         amount_of_chars,
-        max_lsb_to_use
+        max_lsb_to_use,
+        force_max_lsb
     );
 
     cover_img.save_image(stego_img_path);
@@ -120,7 +122,7 @@ int main(int argc, char **argv) {
     else if (strcmp(command, "write") == 0) {
         if (argc < 7) {
             fprintf(stderr, "Missing arguments.\n");
-            fprintf(stderr, "Usage: %s write <text_path> <cover_img_path> <stego_img_path> <|t|> <k>\n", argv[0]);
+            fprintf(stderr, "Usage: %s write <text_path> <cover_img_path> <stego_img_path> <|t|> <k> [-f]\n", argv[0]);
             return -1;
         }
 
@@ -139,13 +141,16 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Invalid amount of LSBs to use.\n");
             return -1;
         }
+
+        bool force_max_lsb = argc > 7 && strcmp(argv[7], "-f") == 0;
     
         unsigned int lsb_used = write_stego_to_file(
             input_text_path,
             cover_img_path,
             stego_img_path,
             amount_of_chars,
-            max_lsb_to_use
+            max_lsb_to_use,
+            force_max_lsb
         );
 
         printf("Stego image successfully created.\n");

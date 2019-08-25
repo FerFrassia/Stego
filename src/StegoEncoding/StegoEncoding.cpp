@@ -19,7 +19,8 @@ unsigned int StegoEncoding::write_stego(
   unsigned char* input_text,
   BMPImage &cover_img,
   unsigned int amount_of_chars,
-  unsigned int max_lsb_to_use
+  unsigned int max_lsb_to_use,
+  bool force_max_lsb
 ) {
     int lsb_to_use = determine_min_amount_of_lsb(cover_img, amount_of_chars);
   
@@ -30,6 +31,10 @@ unsigned int StegoEncoding::write_stego(
     else if (lsb_to_use > max_lsb_to_use) {
       printf("fatal: at least %d LSB are necessary\n", lsb_to_use);
       exit(EXIT_FAILURE);      
+    }
+
+    if (force_max_lsb) {
+      lsb_to_use = max_lsb_to_use;
     }
 
     LSBWriter writer = LSBWriter(cover_img, lsb_to_use);
