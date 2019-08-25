@@ -26,15 +26,13 @@ int main(int argc, char **argv) {
   double result;
 
   if (strcmp(metric_name, "mse") == 0) {
-    result = Metrics::determine_mean_squared_error(image, image_2, 0);
+    result = Metrics::determine_mean_squared_error(image, image_2);
   }
   else if (strcmp(metric_name, "psnr") == 0) {
-    result = Metrics::determine_PSNR(image, image_2, 0);
+    result = Metrics::determine_PSNR(image, image_2);
   }
   else if (strcmp(metric_name, "ssim") == 0) {
-    // result = Metrics::determine_SSIM(image, image_2, 0);
-    fprintf(stderr, "Metric not implemented.\n");
-    return -1;
+    result = Metrics::determine_SSIM(image, image_2);
   }
   else {
     fprintf(stderr, "Invalid metric.\n");

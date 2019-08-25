@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdint.h>
+#include <cstdlib>
 
 #include "StegoEncoding.h"
 #include "../LSBStream/LSBWriter.h"
