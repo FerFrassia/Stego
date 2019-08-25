@@ -15,6 +15,13 @@ namespace Metrics {
     BMPImage &input_img_2,
     unsigned int number_of_chars
   );
+
+  double determine_SSIM(
+    BMPImage &input_img,
+    BMPImage &input_img_2,
+    unsigned int number_of_chars
+  );
+
 };
 
 #endif
