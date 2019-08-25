@@ -21,8 +21,6 @@ unsigned int StegoEncoder::write_stego(
       exit(EXIT_FAILURE);      
     }
 
-    printf("using %d LSB to hide text\n", lsb_to_use);
-
     LSBWriter writer = LSBWriter(cover_img, lsb_to_use);
 
     //Split the number of chars into four chunks of one byte

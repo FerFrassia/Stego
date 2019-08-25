@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
-#include "BMPImage/libbmp.h"
 
 #include "BMPImage/BMPImage.h"
 #include "StegoEncoder/StegoEncoder.h"
@@ -139,37 +138,77 @@ Then recovers the hidden text from OUTPUT_IMG and writes it in OUTPUT_TEXT.
 @param argv[6]: The path of the output image.
 */
 int main(int argc, char **argv) {
-    if (argc < 7) {
-        printf("Missing arguments.\n");
-        exit(-1);
+    if (argc < 2) {
+        fprintf(stderr, "A command should be provided.\n");
+        fprintf(stderr, "Valid commands are: read, write.\n");
+        return -1;
     }
 
-    unsigned int k = atoi(argv[1]);
-    if (k < 0 || k > 8) {
-        printf("Invalid number of LSBs to use.\n");
-        exit(-1);
+    char* command = argv[1];
+
+    if (strcmp(command, "read") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "Missing arguments.\n");
+            fprintf(stderr, "Usage: %s read <stego_img_path> <output_text_path> <k>\n", argv[0]);
+            return -1;
+        }
+
+        char* stego_img_path   = argv[2];
+        char* output_text_path = argv[3];
+    
+        unsigned int lsb_to_use = atoi(argv[4]);
+        if (lsb_to_use < 1 || lsb_to_use > 8) {
+            fprintf(stderr, "Invalid amount of LSBs to use.\n");
+            return -1;
+        }
+
+        read_stego_from_file(
+            stego_img_path,
+            output_text_path,
+            lsb_to_use
+        );
     }
 
-    unsigned int amount_of_chars = atoi(argv[2]);
-    if (k < 0) {
-        printf("Invalid amount of characters to hide.\n");
-        exit(-1);
+    else if (strcmp(command, "write") == 0) {
+        if (argc < 7) {
+            fprintf(stderr, "Missing arguments.\n");
+            fprintf(stderr, "Usage: %s write <text_path> <cover_img_path> <stego_img_path> <|t|> <k>\n", argv[0]);
+            return -1;
+        }
+
+        char* input_text_path  = argv[2];
+        char* cover_img_path   = argv[3];
+        char* stego_img_path   = argv[4];
+
+        unsigned int amount_of_chars = atoi(argv[5]);
+        if (amount_of_chars < 0) {
+            fprintf(stderr, "Invalid amount of characters to hide.\n");
+            return -1;
+        }
+
+        unsigned int max_lsb_to_use = atoi(argv[6]);
+        if (max_lsb_to_use < 1 || max_lsb_to_use > 8) {
+            fprintf(stderr, "Invalid amount of LSBs to use.\n");
+            return -1;
+        }
+    
+        unsigned int lsb_used = write_stego_to_file(
+            input_text_path,
+            cover_img_path,
+            stego_img_path,
+            amount_of_chars,
+            max_lsb_to_use
+        );
+
+        printf("Stego image successfully created.\n");
+        printf("Number of LSB used: %d.\n", lsb_used);
     }
 
-    char* input_text_path  = argv[3];
-    char* cover_img_path   = argv[4];
-    char* output_text_path = argv[5];
-    char* stego_img_path   = argv[6];
-
-    unsigned int lsb_used = write_stego_to_file(
-        input_text_path,
-        cover_img_path,
-        stego_img_path,
-        amount_of_chars,
-        k
-    );
-
-    read_stego_from_file(stego_img_path, output_text_path, lsb_used);
+    else {
+        fprintf(stderr, "Invalid command.\n");
+        fprintf(stderr, "Valid commands are: read, write.\n");
+        return -1;
+    }
 
     return 0;
 }
