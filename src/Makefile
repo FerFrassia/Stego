@@ -3,10 +3,10 @@ CXX=g++
 LD=ld
 RM=rm -f
 CFLAGS=-g -Wall
-CPPLAGS=-g -Wall
-LDFLAGS=-g -lm
+CXXFLAGS=-g -Wall
+LDFLAGS=-lm
 
-CPPSRCS=main.cpp BMPImage.cpp
+CPPSRCS=main.cpp BMPImage.cpp LSBStream.cpp LSBReader.cpp LSBWriter.cpp
 CPPOBJS=$(subst .cpp,.o,$(CPPSRCS))
 
 CSRCS=libbmp.c
@@ -15,7 +15,7 @@ COBJS=$(subst .c,.o,$(CSRCS))
 all: stego
 
 stego: $(CPPOBJS) $(COBJS)
-		$(CXX) $(CPPFLAGS) -o stego $(CPPOBJS) $(COBJS) $(LDFLAGS)
+		$(CXX) $(CXXFLAGS) -o stego $(CPPOBJS) $(COBJS) $(LDFLAGS)
 
 cdepend: .cdepend
 
@@ -27,7 +27,7 @@ cppdepend: .cppdepend
 
 .cppdepend: $(CPPSRCS)
 		$(RM) ./.cppdepend
-		$(CXX) $(CPPFLAGS) -MM $^>>./.cppdepend;
+		$(CXX) $(CXXFLAGS) -MM $^>>./.cppdepend;
 
 clean:
 		$(RM) $(COBJS) $(CPPOBJS)

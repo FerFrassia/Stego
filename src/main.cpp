@@ -6,6 +6,8 @@
 #include "libbmp.h"
 
 #include "BMPImage.h"
+#include "LSBReader.h"
+#include "LSBWriter.h"
 
 /*!
 @method create_file_and_write.
@@ -14,7 +16,7 @@ Returns a pointer to the created file.
 @param file_path: The path of the file to create.
 @param text: Text to write in the file.
 */
-FILE* create_file_and_write(char* file_path, char* text) {
+FILE* create_file_and_write(char* file_path, unsigned char* text) {
 
     FILE* fp;
     if ((fp = fopen(file_path, "w")) == NULL) {
@@ -37,7 +39,7 @@ Returns the size of the text.
 @param amount_of_chars: The amount of characters to read from the text.
 @discussion Skips the first line because the text starts at the second line.
 */
-unsigned int read_text(char* file_path, char* text, unsigned int amount_of_chars) {
+unsigned int read_text(char* file_path, unsigned char* text, unsigned int amount_of_chars) {
 
     FILE *fp;
     if ((fp = fopen(file_path, "r")) == NULL) {
@@ -92,24 +94,6 @@ int determine_min_amount_of_lsb(char* input_img_path, unsigned int number_of_cha
     return min_lsb;
 }
 
-
-/*!
-@method bit_mask_byte.
-@abstract Generates a bitmask with the k least significant bits set to 1.
-Returns a char with the generated bitmask.
-@param k: The number of least significant bits to set to 1.
-*/
-unsigned char bit_mask_byte(unsigned int k) {
-
-    unsigned char bit_mask_char = 0x00;
-    for (int i = 0; i < k; ++i) {
-        bit_mask_char = bit_mask_char | (0x01 << i);
-    }
-
-    return bit_mask_char;
-}
-
-
 /*!
 @method write_stegoInLeastSignificant.
 @abstract Opens the original image, and creates a stego image by copying the original image and writting the text in the least
@@ -122,9 +106,8 @@ significant bit of every byte (this will represent a RGB channel).
 @discussion This method first checks if the stego image to create will be large enough to hold the entire text.
 If not, it exits with a failure message.
 */
-void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, char* text, unsigned int k) {
-
-    BMPImage input_image = BMPImage(input_img_path);
+void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, unsigned char* text, unsigned int k) {
+    LSBWriter writer = LSBWriter(input_img_path, k);
 
     //Split the number of chars into four chunks of one byte
     unsigned char bytes_to_store[4];
@@ -133,54 +116,14 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
     bytes_to_store[2] = (unsigned char)((number_of_chars >> 8) & 0xFF);
     bytes_to_store[3] = (unsigned char)(number_of_chars & 0xFF);
 
-    unsigned char bit_mask_char    = bit_mask_byte(1);
-    unsigned char bit_mask_channel = ~(bit_mask_char << (k-1)); //This is NOT(bit_mask_byte << k-1)
-
-    unsigned char bit_current_number = 0;
-    unsigned char original_channel   = 0;
-    unsigned char modified_channel   = 0;
-    unsigned int lsb_used = 0;
-
     //Write number of chars
-    for (int i = 0; i < 4; ++i) {
-        char current_char = bytes_to_store[i];
-        for (int j = 7; j >= 0; --j) {
-
-            bit_current_number = (current_char >> j) & (bit_mask_char);
-            original_channel   = input_image.read_byte();
-            modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
-            input_image.write_byte(modified_channel);
-
-            lsb_used++;
-            if (lsb_used >= k) {
-                input_image.next_byte();
-                lsb_used = 0;
-            }
-            bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
-        }
-    }
+    writer.write_bytes(bytes_to_store, 4);
 
     //Write text
-    for (int i = 0; i < number_of_chars; ++i) {
-        char current_char = text[i];
-        for (int j = 7; j >= 0; --j) {
-
-            bit_current_number = (current_char >> j) & (bit_mask_char);
-            original_channel   = input_image.read_byte();
-            modified_channel   = (original_channel & bit_mask_channel) | (bit_current_number << (k-1-lsb_used));
-            input_image.write_byte(modified_channel);
-
-            lsb_used++;
-            if (lsb_used >= k) {
-                input_image.next_byte();
-                lsb_used = 0;
-            }
-            bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
-        }
-    }
+    writer.write_bytes(text, number_of_chars);
 
     //Store image
-    input_image.save_image(output_img_path);
+    writer.finish(output_img_path);
 }
 
 
@@ -193,66 +136,20 @@ and creates a text file with it.
 @param k: Number of LSBs to use.
 */
 void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
-
-    BMPImage stego_image = BMPImage(stego_img_path);
+    LSBReader reader = LSBReader(stego_img_path, k);
 
     //Extract the number of characters to read;
     unsigned char bytes_extracted[4];
-    unsigned char bit_mask_char = bit_mask_byte(1);
-
-    unsigned char current_char = 0;
-    unsigned char current_bits = 0;
-    unsigned int lsb_used = 0;
-
-    for (int i = 0; i < 4; ++i) {
-
-        current_char = 0;
-        for (int j = 7; j >= 0; --j) {
-
-            current_bits = (stego_image.read_byte() >> (k-1-lsb_used)) & bit_mask_char;
-            current_bits = current_bits << j;
-            current_char = current_char | current_bits;
-
-            lsb_used++;
-            if (lsb_used >= k) {
-                stego_image.next_byte();
-                lsb_used = 0;
-                bit_mask_char = bit_mask_byte(1);
-            }
-        }
-        bytes_extracted[i] = current_char;
-    }
+    reader.read_bytes(bytes_extracted, 4);
     unsigned int amount_of_chars = ((unsigned int)bytes_extracted[0] << 24) | ((unsigned int)bytes_extracted[1] << 16) | ((unsigned int)bytes_extracted[2] << 8) | (unsigned int)bytes_extracted[3];
-
 
     //Debug text
     printf("\n.......text extracted.......\n\n");
     //
 
     //Read text
-    char text[amount_of_chars+1];
-
-    for (int i = 0; i < amount_of_chars; ++i) {
-
-        current_char = 0;
-        for (int j = 7; j >= 0; --j) {
-
-            current_bits = (stego_image.read_byte() >> (k-1-lsb_used)) & bit_mask_char;
-            current_bits = current_bits << j;
-            current_char = current_char | current_bits;
-
-            lsb_used++;
-            if (lsb_used >= k) {
-                stego_image.next_byte();
-                lsb_used = 0;
-                bit_mask_char = bit_mask_byte(1);
-            }
-        }
-        text[i] = current_char;
-        //Debug text
-        printf("%c", text[i]);
-        //
-    }
+    unsigned char text[amount_of_chars+1];
+    reader.read_bytes(text, amount_of_chars);
     text[amount_of_chars] = '\0';
 
     //Debug text
@@ -276,7 +173,7 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 */
 void write_stego(char* inputText, char* input_img, char* outputImg, unsigned int amount_of_chars, unsigned int k) {
 
-    char* text = (char*)malloc(sizeof(char)*(amount_of_chars+1));
+    unsigned char* text = (unsigned char*)malloc(sizeof(char)*(amount_of_chars+1));
     unsigned int text_size = read_text(inputText, text, amount_of_chars);
     text[amount_of_chars] = '\0';
 
