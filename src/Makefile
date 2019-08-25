@@ -10,7 +10,7 @@ EXECS=stego metrics
 
 STEGO_SRCS=stego.cpp \
 	BMPImage/BMPImage.cpp \
-	StegoEncoder/StegoEncoder.cpp \
+	StegoEncoding/StegoEncoding.cpp \
 	LSBStream/LSBStream.cpp LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
 STEGO_OBJS=$(subst .cpp,.o,$(STEGO_SRCS))
 

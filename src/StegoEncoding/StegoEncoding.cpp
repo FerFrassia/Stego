@@ -1,10 +1,21 @@
 #include <math.h>
 
-#include "StegoEncoder.h"
+#include "StegoEncoding.h"
 #include "../LSBStream/LSBWriter.h"
 #include "../LSBStream/LSBReader.h"
 
-unsigned int StegoEncoder::write_stego(
+/*
+ * Auxiliary method declarations
+ */
+static int determine_min_amount_of_lsb(
+  BMPImage &image,
+  unsigned int number_of_chars
+);
+static void split_into_bytes(unsigned int number, unsigned char* bytes);
+static unsigned int join_bytes(unsigned char* bytes);
+
+
+unsigned int StegoEncoding::write_stego(
   unsigned char* input_text,
   BMPImage &cover_img,
   unsigned int amount_of_chars,
@@ -36,7 +47,7 @@ unsigned int StegoEncoder::write_stego(
     return lsb_to_use;
 };
 
-unsigned char* StegoEncoder::read_stego(
+unsigned char* StegoEncoding::read_stego(
   BMPImage &stego_img,
   unsigned int lsb_to_use
 ) {
@@ -55,7 +66,8 @@ unsigned char* StegoEncoder::read_stego(
   return text;
 };
 
-int StegoEncoder::determine_min_amount_of_lsb(
+
+int determine_min_amount_of_lsb(
   BMPImage &image,
   unsigned int number_of_chars
 ) {
@@ -73,14 +85,14 @@ int StegoEncoder::determine_min_amount_of_lsb(
     return min_lsb;
 }
 
-void StegoEncoder::split_into_bytes(unsigned int number, unsigned char* bytes) {
+void split_into_bytes(unsigned int number, unsigned char* bytes) {
   bytes[0] = (unsigned char)((number >> 24) & 0xFF);
     bytes[1] = (unsigned char)((number >> 16) & 0xFF);
     bytes[2] = (unsigned char)((number >> 8) & 0xFF);
     bytes[3] = (unsigned char)(number & 0xFF);
 }
 
-unsigned int StegoEncoder::join_bytes(unsigned char* bytes) {
+unsigned int join_bytes(unsigned char* bytes) {
   return ((unsigned int)bytes[0] << 24)
     | ((unsigned int)bytes[1] << 16)
     | ((unsigned int)bytes[2] << 8)

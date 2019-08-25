@@ -1,10 +1,9 @@
-#ifndef __STEGOENCODER_H__
-#define __STEGOENCODER_H__
+#ifndef __STEGOENCODING_H__
+#define __STEGOENCODING_H__
 
 #include "../BMPImage/BMPImage.h"
 
-class StegoEncoder {
- public:
+namespace StegoEncoding {
   /*!
   @method write_stego.
   @abstract Modifies the provided image by writing the provided text in the least
@@ -17,7 +16,7 @@ class StegoEncoder {
   If not, it exits with a failure message.
   @return The number of LSBs actually used to hide the text.
   */
-  static unsigned int write_stego(
+  unsigned int write_stego(
     unsigned char* input_text,
     BMPImage &cover_img,
     unsigned int amount_of_chars,
@@ -33,20 +32,7 @@ class StegoEncoder {
   @param lsb_to_use: The number of LSBs to use.
   @return A pointer to a buffer containing the extracted text.
   */
-  static unsigned char* read_stego(BMPImage &stego_img, unsigned int lsb_to_use);
-
- private:
-  /*!
-  @method determine_min_amount_of_lsb
-  @abstract Determines the minimum amount of Least Significant Bits required to encode the chars in the image.
-  Returns -1 if the image is not large enough to encode the image.
-  @params image: The image to check as container.
-  @params number_of_chars: The amount of chars to check as source.
-  */
-  static int determine_min_amount_of_lsb(BMPImage &image, unsigned int number_of_chars);
-  
-  static void split_into_bytes(unsigned int number, unsigned char* bytes);
-  static unsigned int join_bytes(unsigned char* bytes);
+  unsigned char* read_stego(BMPImage &stego_img, unsigned int lsb_to_use);
 };
 
 #endif

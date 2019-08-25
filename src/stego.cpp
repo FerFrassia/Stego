@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "BMPImage/BMPImage.h"
-#include "StegoEncoder/StegoEncoder.h"
+#include "StegoEncoding/StegoEncoding.h"
 
 /*!
 @method create_file_and_write.
@@ -75,7 +75,7 @@ void read_stego_from_file(
 ) {
     BMPImage stego_img = BMPImage(stego_img_path);
 
-    unsigned char* text = StegoEncoder::read_stego(
+    unsigned char* text = StegoEncoding::read_stego(
         stego_img,
         lsb_to_use
     );
@@ -112,7 +112,7 @@ unsigned int write_stego_to_file(
 
     BMPImage cover_img = BMPImage(cover_img_path);
 
-    unsigned int lsb_used = StegoEncoder::write_stego(
+    unsigned int lsb_used = StegoEncoding::write_stego(
         input_text,
         cover_img,
         amount_of_chars,
