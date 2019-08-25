@@ -11,7 +11,7 @@ output_text_path = "../output/text.txt"
 cover_image_names = ["n01", "n02", "t01", "t02", "s01", "s02"]
 
 metrics_executable = "../src/metrics"
-metrics = ["mse", "psnr"]
+metrics = ["mse", "psnr", "ssim"]
 
 variables_values = [ { "k": k, "t": t } for k in range(1, 9) for t in [100, 370000] ] \
   + [ { "k": k, "t": t } for k in [1, 2] for t in [ 2**i for i in range(4,19)] ]
