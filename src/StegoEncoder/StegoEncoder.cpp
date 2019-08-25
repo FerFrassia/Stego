@@ -27,10 +27,7 @@ unsigned int StegoEncoder::write_stego(
 
     //Split the number of chars into four chunks of one byte
     unsigned char bytes_to_store[4];
-    bytes_to_store[0] = (unsigned char)((amount_of_chars >> 24) & 0xFF);
-    bytes_to_store[1] = (unsigned char)((amount_of_chars >> 16) & 0xFF);
-    bytes_to_store[2] = (unsigned char)((amount_of_chars >> 8) & 0xFF);
-    bytes_to_store[3] = (unsigned char)(amount_of_chars & 0xFF);
+    split_into_bytes(amount_of_chars, bytes_to_store);
 
     //Write number of chars
     writer.write_bytes(bytes_to_store, 4);
@@ -50,14 +47,7 @@ unsigned char* StegoEncoder::read_stego(
   //Extract the number of characters to read;
   unsigned char bytes_extracted[4];
   reader.read_bytes(bytes_extracted, 4);
-  unsigned int amount_of_chars = ((unsigned int)bytes_extracted[0] << 24)
-    | ((unsigned int)bytes_extracted[1] << 16)
-    | ((unsigned int)bytes_extracted[2] << 8)
-    | (unsigned int)bytes_extracted[3];
-
-  //Debug text
-  printf("\n.......text extracted.......\n\n");
-  //
+  unsigned int amount_of_chars = join_bytes(bytes_extracted); 
 
   //Read text
   unsigned char* text = (unsigned char*) malloc(amount_of_chars + 1);
@@ -88,4 +78,18 @@ int StegoEncoder::determine_min_amount_of_lsb(
     }
 
     return min_lsb;
+}
+
+void StegoEncoder::split_into_bytes(unsigned int number, unsigned char* bytes) {
+  bytes[0] = (unsigned char)((number >> 24) & 0xFF);
+    bytes[1] = (unsigned char)((number >> 16) & 0xFF);
+    bytes[2] = (unsigned char)((number >> 8) & 0xFF);
+    bytes[3] = (unsigned char)(number & 0xFF);
+}
+
+unsigned int StegoEncoder::join_bytes(unsigned char* bytes) {
+  return ((unsigned int)bytes[0] << 24)
+    | ((unsigned int)bytes[1] << 16)
+    | ((unsigned int)bytes[2] << 8)
+    | (unsigned int)bytes[3];
 }

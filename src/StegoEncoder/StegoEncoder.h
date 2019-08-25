@@ -44,6 +44,9 @@ class StegoEncoder {
   @params number_of_chars: The amount of chars to check as source.
   */
   static int determine_min_amount_of_lsb(BMPImage &image, unsigned int number_of_chars);
+  
+  static void split_into_bytes(unsigned int number, unsigned char* bytes);
+  static unsigned int join_bytes(unsigned char* bytes);
 };
 
 #endif
