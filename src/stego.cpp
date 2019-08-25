@@ -3,10 +3,21 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <chrono>
 
 #include "Text/Text.h"
 #include "BMPImage/BMPImage.h"
 #include "StegoEncoding/StegoEncoding.h"
+
+typedef typeof std::chrono::steady_clock::now() time_point;
+
+struct time_measurements {
+    time_point total_start;
+    time_point total_end;
+    time_point processing_start;
+    time_point processing_end;
+};
+
 
 /*!
 @method read_stego_from_file.
@@ -14,27 +25,30 @@
 and creates a text file with it.
 @param stegoName: The path of the stego image.
 @param outputTextName: The path of the text file to create with the stego text extracted.
+@param time_measurements: Time measurements will be stored here.
 @param lsb_to_use: Number of LSBs to use.
 */
 void read_stego_from_file(
     char* stego_img_path,
     char* output_text_path,
-    unsigned int lsb_to_use
+    unsigned int lsb_to_use,
+    time_measurements &time_measurements
 ) {
+    time_measurements.total_start = std::chrono::steady_clock::now();
+
     BMPImage stego_img = BMPImage(stego_img_path);
 
+    time_measurements.processing_start = std::chrono::steady_clock::now();
     unsigned char* text = StegoEncoding::read_stego(
         stego_img,
         lsb_to_use
     );
-
-    //Debug text
-    printf("\n.......output preview.......\n\n");
-    printf("%s\n", text);
+    time_measurements.processing_end = std::chrono::steady_clock::now();
 
     TextFileHandling::create_file_and_write(output_text_path, text);
 
     free(text);
+    time_measurements.total_end = std::chrono::steady_clock::now();
 }
 
 /*!
@@ -45,6 +59,7 @@ void read_stego_from_file(
 @params stego_img_path: The path of the stego image to create.
 @params amount_of_chars: The amount of characters to hide.
 @param max_lsb_to_use: Maximum number of LSBs to use.
+@param time_measurements: Time measurements will be stored here.
 @return The amount of LSB actually used to hide the text into the image.
 */
 unsigned int write_stego_to_file(
@@ -53,14 +68,18 @@ unsigned int write_stego_to_file(
     char* stego_img_path,
     unsigned int amount_of_chars,
     unsigned int max_lsb_to_use,
-    bool force_max_lsb
+    bool force_max_lsb,
+    time_measurements &time_measurements
 ) {
+    time_measurements.total_start = std::chrono::steady_clock::now();
+
     unsigned char* input_text = (unsigned char*) malloc(sizeof(char)*(amount_of_chars+1));
     TextFileHandling::read_text(input_text_path, input_text, amount_of_chars);
     input_text[amount_of_chars] = '\0';
 
     BMPImage cover_img = BMPImage(cover_img_path);
 
+    time_measurements.processing_start = std::chrono::steady_clock::now();
     unsigned int lsb_used = StegoEncoding::write_stego(
         input_text,
         cover_img,
@@ -68,11 +87,12 @@ unsigned int write_stego_to_file(
         max_lsb_to_use,
         force_max_lsb
     );
-
+    time_measurements.processing_end = std::chrono::steady_clock::now();
+        
     cover_img.save_image(stego_img_path);
 
     free(input_text);
-
+    time_measurements.total_end = std::chrono::steady_clock::now();
     return lsb_used;
 }
 
@@ -88,6 +108,8 @@ Then recovers the hidden text from OUTPUT_IMG and writes it in OUTPUT_TEXT.
 @param argv[6]: The path of the output image.
 */
 int main(int argc, char **argv) {
+    time_measurements time_measurements;
+
     if (argc < 2) {
         fprintf(stderr, "A command should be provided.\n");
         fprintf(stderr, "Valid commands are: read, write.\n");
@@ -115,7 +137,8 @@ int main(int argc, char **argv) {
         read_stego_from_file(
             stego_img_path,
             output_text_path,
-            lsb_to_use
+            lsb_to_use,
+            time_measurements
         );
     }
 
@@ -143,14 +166,15 @@ int main(int argc, char **argv) {
         }
 
         bool force_max_lsb = argc > 7 && strcmp(argv[7], "-f") == 0;
-    
+
         unsigned int lsb_used = write_stego_to_file(
             input_text_path,
             cover_img_path,
             stego_img_path,
             amount_of_chars,
             max_lsb_to_use,
-            force_max_lsb
+            force_max_lsb,
+            time_measurements
         );
 
         printf("Stego image successfully created.\n");
@@ -163,5 +187,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    auto total_time = std::chrono::duration_cast<std::chrono::microseconds>
+        (time_measurements.total_end - time_measurements.total_start).count();
+    auto processing_time = std::chrono::duration_cast<std::chrono::microseconds>
+        (time_measurements.processing_end - time_measurements.processing_start).count();
+    printf("Elapsed time: processing  %d µs.\n", processing_time); 
+    printf("              total       %d µs.\n", total_time);
     return 0;
 }
