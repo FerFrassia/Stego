@@ -1,7 +1,7 @@
 #ifndef __METRICS_H__
 #define __METRICS_H__
 
-#include "BMPImage.h"
+#include "../BMPImage/BMPImage.h"
 
 class Metrics {
  public:

@@ -3,11 +3,11 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
-#include "libbmp.h"
+#include "BMPImage/libbmp.h"
 
-#include "BMPImage.h"
-#include "LSBReader.h"
-#include "LSBWriter.h"
+#include "BMPImage/BMPImage.h"
+#include "LSBStream/LSBReader.h"
+#include "LSBStream/LSBWriter.h"
 
 /*!
 @method create_file_and_write.

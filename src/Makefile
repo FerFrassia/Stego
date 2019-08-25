@@ -6,31 +6,41 @@ CFLAGS=-g -Wall
 CXXFLAGS=-g -Wall
 LDFLAGS=-lm
 
-CPPSRCS=main.cpp BMPImage.cpp LSBStream.cpp LSBReader.cpp LSBWriter.cpp
-CPPOBJS=$(subst .cpp,.o,$(CPPSRCS))
+EXECS=stego metrics
 
-CSRCS=libbmp.c
-COBJS=$(subst .c,.o,$(CSRCS))
+STEGO_SRCS=stego.cpp BMPImage/BMPImage.cpp LSBStream/LSBStream.cpp \
+ LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
+STEGO_OBJS=$(subst .cpp,.o,$(STEGO_SRCS))
 
-all: stego
+METRICS_SRCS=metrics.cpp
+METRICS_OBJS=$(subst .cpp,.o,$(METRICS_SRCS))
 
-stego: $(CPPOBJS) $(COBJS)
-		$(CXX) $(CXXFLAGS) -o stego $(CPPOBJS) $(COBJS) $(LDFLAGS)
+LIBBMP_SRCS=BMPImage/libbmp.c
+LIBBMP_OBJS=$(subst .c,.o,$(LIBBMP_SRCS))
+
+
+all: stego metrics
+
+stego: $(STEGO_OBJS) $(LIBBMP_OBJS)
+		$(CXX) $(CXXFLAGS) -o stego $(STEGO_OBJS) $(LIBBMP_OBJS) $(LDFLAGS)
+
+metrics: $(METRICS_OBJS) $(LIBBMP_OBJS)
+		$(CXX) $(CXXFLAGS) -o metrics $(METRICS_OBJS) $(LIBBMP_OBJS) $(LDFLAGS)
 
 cdepend: .cdepend
 
-.cdepend: $(CSRCS)
+.cdepend: $(LIBBMP_SRCS)
 		$(RM) ./.cdepend
 		$(CC) $(CFLAGS) -MM $^>>./.cdepend;
 
 cppdepend: .cppdepend
 
-.cppdepend: $(CPPSRCS)
+.cppdepend: $(STEGO_SRCS) $(METRICS_SRCS)
 		$(RM) ./.cppdepend
 		$(CXX) $(CXXFLAGS) -MM $^>>./.cppdepend;
 
 clean:
-		$(RM) $(COBJS) $(CPPOBJS)
+		$(RM) $(STEGO_OBJS) $(METRICS_OBJS) $(LIBBMP_OBJS)
 
 distclean: clean
 		$(RM) *~ .cdepend

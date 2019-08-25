@@ -1,7 +1,7 @@
 #ifndef __LSBSTREAM_H__
 #define __LSBSTREAM_H__
 
-#include "BMPImage.h"
+#include "../BMPImage/BMPImage.h"
 
 class LSBStream {
  public:
