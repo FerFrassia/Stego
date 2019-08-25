@@ -82,10 +82,10 @@ double Metrics::determine_SSIM(
     double average_x = 0;
     double average_y = 0;
 
-    std::vector<vector<> > datos (img_size*3,0);
+    // std::vector<vector<> > datos (img_size*3,0);
 
-    accumulator_set<double, stats<tag::variance> > acc;
-    for_each(datos.begin(), datos.end(), bind<void>(ref(acc), _1));
+    // accumulator_set<double, stats<tag::variance> > acc;
+    // for_each(datos.begin(), datos.end(), bind<void>(ref(acc), _1));
 
 
 
