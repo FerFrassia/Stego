@@ -27,7 +27,7 @@ unsigned int TextFileHandling::read_text(char* file_path, unsigned char* text, u
     while (fgets(buffer, sizeof(buffer)+sizeof(char), fp) != NULL) {
 
         int i = 0;
-        while (buffer[i] != '\0' && text_index < amount_of_chars-1) {
+        while (buffer[i] != '\0' && text_index < amount_of_chars) {
             text[text_index] = buffer[i];
             ++text_index;
             ++i;

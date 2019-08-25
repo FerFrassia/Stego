@@ -74,9 +74,8 @@ unsigned int write_stego_to_file(
 ) {
     time_measurements.total_start = std::chrono::steady_clock::now();
 
-    unsigned char* input_text = (unsigned char*) malloc(sizeof(char)*(amount_of_chars+1));
+    unsigned char* input_text = (unsigned char*) malloc(sizeof(char)*(amount_of_chars));
     TextFileHandling::read_text(input_text_path, input_text, amount_of_chars);
-    input_text[amount_of_chars] = '\0';
 
     BMPImage cover_img = BMPImage(cover_img_path);
 
