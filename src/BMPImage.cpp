@@ -11,11 +11,11 @@ BMPImage::BMPImage(char* image_path) {
   row_length = image->img_header.biWidth * sizeof(bmp_pixel);
   current_row = 0;
   current_byte = 0;
-};
+}
 
 BMPImage::~BMPImage() {
   free(image);
-};
+}
 
 unsigned char BMPImage::read_byte() {
   return *(get_current_byte_pointer());
