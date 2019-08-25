@@ -551,7 +551,6 @@ s02,2,131072,mse,0.4968
 s02,2,131072,psnr,51.17
 s02,2,262144,mse,0.975
 s02,2,262144,psnr,48.24
-cover_image_name,k,t,metric,value
 n01,1,100,ssim,1.0
 n01,1,370000,ssim,1.0
 n01,2,100,ssim,1.0
