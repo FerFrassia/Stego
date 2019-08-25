@@ -5,7 +5,7 @@
 
 class LSBStream {
  public:
-  LSBStream(char* image_path, unsigned int max_lsb_to_use);
+  LSBStream(BMPImage image, unsigned int max_lsb_to_use);
 
  protected:
   BMPImage image;

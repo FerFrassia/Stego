@@ -5,7 +5,7 @@
 
 class LSBReader : LSBStream {
  public:
-  LSBReader(char* image_path, unsigned int lsb_to_use);
+  LSBReader(BMPImage image, unsigned int lsb_to_use);
 
   void read_bytes(unsigned char* buffer, unsigned int count);
 

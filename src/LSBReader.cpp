@@ -1,7 +1,7 @@
 #include "LSBReader.h"
 
-LSBReader::LSBReader(char* image_path, unsigned int lsb_to_use) :
-  LSBStream(image_path, lsb_to_use) {}
+LSBReader::LSBReader(BMPImage image, unsigned int lsb_to_use) :
+  LSBStream(image, lsb_to_use) {}
 
 void LSBReader::read_bytes(unsigned char* buffer, unsigned int count) {
   for (int i = 0; i < count; ++i) {

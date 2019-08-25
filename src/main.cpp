@@ -107,7 +107,7 @@ significant bit of every byte (this will represent a RGB channel).
 If not, it exits with a failure message.
 */
 void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, unsigned char* text, unsigned int k) {
-    LSBWriter writer = LSBWriter(input_img_path, k);
+    LSBWriter writer = LSBWriter(BMPImage(input_img_path), k);
 
     //Split the number of chars into four chunks of one byte
     unsigned char bytes_to_store[4];
@@ -136,7 +136,7 @@ and creates a text file with it.
 @param k: Number of LSBs to use.
 */
 void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
-    LSBReader reader = LSBReader(stego_img_path, k);
+    LSBReader reader = LSBReader(BMPImage(stego_img_path), k);
 
     //Extract the number of characters to read;
     unsigned char bytes_extracted[4];

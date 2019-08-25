@@ -1,9 +1,9 @@
 #include "LSBStream.h"
 
-LSBStream::LSBStream(char* image_path, unsigned int max_lsb_to_use) :
-  image(BMPImage(image_path)),
-  max_lsb_to_use(max_lsb_to_use) {
-  current_lsb_offset = 0;
+LSBStream::LSBStream(BMPImage image, unsigned int max_lsb_to_use) :
+  image(image),
+  max_lsb_to_use(max_lsb_to_use),
+  current_lsb_offset(0) {
 }
 
 void LSBStream::advance_current_lsb_offset() {
