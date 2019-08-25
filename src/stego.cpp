@@ -81,6 +81,10 @@ void read_stego_from_file(
         lsb_to_use
     );
 
+    //Debug text
+    printf("\n.......output preview.......\n\n");
+    printf("%s\n", text);
+
     create_file_and_write(output_text_path, text);
 
     free(text);

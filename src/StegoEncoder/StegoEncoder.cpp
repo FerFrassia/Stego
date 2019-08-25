@@ -54,11 +54,6 @@ unsigned char* StegoEncoder::read_stego(
   reader.read_bytes(text, amount_of_chars);
   text[amount_of_chars] = '\0';
 
-  //Debug text
-  printf("\n.......output preview.......\n\n");
-  printf("%s\n", text);
-  //
-
   return text;
 };
 
