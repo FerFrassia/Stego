@@ -15,7 +15,9 @@ STEGO_SRCS=stego.cpp \
 	LSBStream/LSBStream.cpp LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
 STEGO_OBJS=$(subst .cpp,.o,$(STEGO_SRCS))
 
-METRICS_SRCS=metrics.cpp
+METRICS_SRCS=metrics.cpp \
+	BMPImage/BMPImage.cpp \
+	Metrics/Metrics.cpp
 METRICS_OBJS=$(subst .cpp,.o,$(METRICS_SRCS))
 
 LIBBMP_SRCS=BMPImage/libbmp.c
