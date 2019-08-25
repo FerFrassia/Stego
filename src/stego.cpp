@@ -140,6 +140,8 @@ int main(int argc, char **argv) {
             lsb_to_use,
             time_measurements
         );
+
+        printf("Text extracted successfully.\n");
     }
 
     else if (strcmp(command, "write") == 0) {
