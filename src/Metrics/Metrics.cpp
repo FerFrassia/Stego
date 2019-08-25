@@ -1,7 +1,5 @@
 #include <math.h>
 #include <vector>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
 #include "Metrics.h"
 
 using namespace std;
