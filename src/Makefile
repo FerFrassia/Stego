@@ -9,6 +9,7 @@ LDFLAGS=-g -lm
 EXECS=stego metrics
 
 STEGO_SRCS=stego.cpp \
+	Text/Text.cpp \
 	BMPImage/BMPImage.cpp \
 	StegoEncoding/StegoEncoding.cpp \
 	LSBStream/LSBStream.cpp LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
