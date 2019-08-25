@@ -116,6 +116,9 @@ double Metrics::determine_SSIM(
         pixels2[i * 3] = pixel_2.red;
         pixels2[i * 3 + 1] = pixel_2.green;
         pixels2[i * 3 + 2] = pixel_2.blue;
+
+        input_img.next_pixel();
+        input_img_2.next_pixel();
     }
 
     double mu_x = mean(pixels1, N);
