@@ -147,7 +147,15 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
     bytes_to_store[2] = (unsigned char)((number_of_chars >> 8) & 0xFF);
     bytes_to_store[3] = (unsigned char)(number_of_chars & 0xFF);
 
-    unsigned char *current_channel = (unsigned char*)(*(input_img->img_pixels));
+    // Amount of bytes per image row
+    unsigned int row_length = input_img->img_header.biWidth * sizeof(bmp_pixel);
+    // Row to which we are currently writing
+    unsigned int current_row = 0;
+    // Index of the byte in the current row we are going to write next
+    unsigned int current_byte = 0;
+    // Pointer to the next byte to write
+    unsigned char *current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
+
     unsigned char bit_mask_char    = bit_mask_byte(1);
     unsigned char bit_mask_channel = ~(bit_mask_char << (k-1)); //This is NOT(bit_mask_byte << k-1)
 
@@ -168,7 +176,16 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
 
             lsb_used++;
             if (lsb_used >= k) {
-                current_channel += 1;
+                if (current_byte + 1 < row_length) {
+                    // If there are bytes left in this row, advance one byte
+                    current_byte += 1;
+                    current_channel += 1;
+                } else {
+                    // Otherwise go to the next row
+                    current_row += 1;
+                    current_byte = 0;
+                    current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
+                }
                 lsb_used = 0;
             }
             bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
@@ -187,7 +204,16 @@ void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned in
 
             lsb_used++;
             if (lsb_used >= k) {
-                current_channel += 1;
+                if (current_byte + 1 < row_length) {
+                    // If there are bytes left in this row, advance one byte
+                    current_byte += 1;
+                    current_channel += 1;
+                } else {
+                    // Otherwise go to the next row
+                    current_row += 1;
+                    current_byte = 0;
+                    current_channel = (unsigned char*)(input_img->img_pixels[current_row]);
+                }
                 lsb_used = 0;
             }
             bit_mask_channel = ~(bit_mask_char << (k-1-lsb_used));
@@ -213,9 +239,17 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
     bmp_img *stego_img = malloc(sizeof(bmp_img));
     open_image(stego_img_path, stego_img);
 
+    // Amount of bytes per image row
+    unsigned int row_length = stego_img->img_header.biWidth * sizeof(bmp_pixel);
+    // Row to which we are currently writing
+    unsigned int current_row = 0;
+    // Index of the byte in the current row we are going to write next
+    unsigned int current_byte = 0;
+    // Pointer to the next byte to write
+    unsigned char *current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
+
     //Extract the number of characters to read;
     unsigned char bytes_extracted[4];
-    unsigned char *current_channel = (unsigned char*)(*(stego_img->img_pixels));
     unsigned char bit_mask_char = bit_mask_byte(1);
 
     unsigned char current_char = 0;
@@ -233,7 +267,16 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 
             lsb_used++;
             if (lsb_used >= k) {
-                current_channel += 1;
+                if (current_byte + 1 < row_length) {
+                    // If there are bytes left in this row, advance one byte
+                    current_byte += 1;
+                    current_channel += 1;
+                } else {
+                    // Otherwise go to the next row
+                    current_row += 1;
+                    current_byte = 0;
+                    current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
+                }
                 lsb_used = 0;
                 bit_mask_char = bit_mask_byte(1);
             }
@@ -261,7 +304,16 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 
             lsb_used++;
             if (lsb_used >= k) {
-                current_channel += 1;
+                if (current_byte + 1 < row_length) {
+                    // If there are bytes left in this row, advance one byte
+                    current_byte += 1;
+                    current_channel += 1;
+                } else {
+                    // Otherwise go to the next row
+                    current_row += 1;
+                    current_byte = 0;
+                    current_channel = (unsigned char*)(stego_img->img_pixels[current_row]);
+                }
                 lsb_used = 0;
                 bit_mask_char = bit_mask_byte(1);
             }
