@@ -28,7 +28,7 @@ and creates a text file with it.
 @param time_measurements: Time measurements will be stored here.
 @param lsb_to_use: Number of LSBs to use.
 */
-void read_stego_from_file(
+int read_stego_from_file(
     char* stego_img_path,
     char* output_text_path,
     unsigned int lsb_to_use,
@@ -45,10 +45,11 @@ void read_stego_from_file(
     );
     time_measurements.processing_end = std::chrono::steady_clock::now();
 
-    TextFileHandling::create_file_and_write(output_text_path, text);
+    int text_length = TextFileHandling::create_file_and_write(output_text_path, text);
 
     free(text);
     time_measurements.total_end = std::chrono::steady_clock::now();
+    return text_length;
 }
 
 /*!
@@ -134,14 +135,14 @@ int main(int argc, char **argv) {
             return -1;
         }
 
-        read_stego_from_file(
+        int text_length = read_stego_from_file(
             stego_img_path,
             output_text_path,
             lsb_to_use,
             time_measurements
         );
 
-        printf("Text extracted successfully.\n");
+        printf("%d characters successfully extracted.\n", text_length);
     }
 
     else if (strcmp(command, "write") == 0) {
