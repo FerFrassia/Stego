@@ -5,10 +5,10 @@
 
 class LSBStream {
  public:
-  LSBStream(BMPImage image, unsigned int max_lsb_to_use);
+  LSBStream(BMPImage &image, unsigned int max_lsb_to_use);
 
  protected:
-  BMPImage image;
+  BMPImage &image;
   unsigned int max_lsb_to_use;
   unsigned int current_lsb_offset;
 

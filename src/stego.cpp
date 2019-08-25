@@ -6,8 +6,7 @@
 #include "BMPImage/libbmp.h"
 
 #include "BMPImage/BMPImage.h"
-#include "LSBStream/LSBReader.h"
-#include "LSBStream/LSBWriter.h"
+#include "StegoEncoder/StegoEncoder.h"
 
 /*!
 @method create_file_and_write.
@@ -17,7 +16,6 @@ Returns a pointer to the created file.
 @param text: Text to write in the file.
 */
 FILE* create_file_and_write(char* file_path, unsigned char* text) {
-
     FILE* fp;
     if ((fp = fopen(file_path, "w")) == NULL) {
         printf("failed: create_file_and_write, errno = %d\n", errno);
@@ -29,7 +27,6 @@ FILE* create_file_and_write(char* file_path, unsigned char* text) {
     return fp;
 }
 
-
 /*!
 @method read_text.
 @abstract Opens the text file and writes it's contents in the variable text.
@@ -40,7 +37,6 @@ Returns the size of the text.
 @discussion Skips the first line because the text starts at the second line.
 */
 unsigned int read_text(char* file_path, unsigned char* text, unsigned int amount_of_chars) {
-
     FILE *fp;
     if ((fp = fopen(file_path, "r")) == NULL) {
         printf("failed: fopen, errno = %d\n", errno);
@@ -65,68 +61,6 @@ unsigned int read_text(char* file_path, unsigned char* text, unsigned int amount
     return text_index;
 }
 
-
-
-
-
-/*!
-@method determine_min_amount_of_lsb
-@abstract Determines the minimum amount of Least Significant Bits required to encode the chars in the image.
-Returns -1 if the image is not large enough to encode the image.
-@params input_img_path: The name of the image to check as container.
-@params number_of_chars: The amount of chars to check as source.
-*/
-int determine_min_amount_of_lsb(char* input_img_path, unsigned int number_of_chars) {
-
-    BMPImage input_img = BMPImage(input_img_path);
-
-    double d_chars  = (double)number_of_chars;
-    double img_size = (double)input_img.get_image_size();
-
-    int min_lsb = -1;
-    for (double i = 1; i <= 8; ++i) {
-        if (img_size >= ceil( (d_chars/i)*8) ) {
-            min_lsb = i;
-            break;
-        }
-    }
-
-    return min_lsb;
-}
-
-/*!
-@method write_stegoInLeastSignificant.
-@abstract Opens the original image, and creates a stego image by copying the original image and writting the text in the least
-significant bit of every byte (this will represent a RGB channel).
-@param inputName: The path of the original image.
-@param outputName: The path of the stego image to create.
-@param number_of_chars: The metadata representing the amount of chars that will be written after it.
-@param text: The text to write.
-@param k: Number of LSBs to use.
-@discussion This method first checks if the stego image to create will be large enough to hold the entire text.
-If not, it exits with a failure message.
-*/
-void write_stego_in_lbs(char* input_img_path, char* output_img_path, unsigned int number_of_chars, unsigned char* text, unsigned int k) {
-    LSBWriter writer = LSBWriter(BMPImage(input_img_path), k);
-
-    //Split the number of chars into four chunks of one byte
-    unsigned char bytes_to_store[4];
-    bytes_to_store[0] = (unsigned char)((number_of_chars >> 24) & 0xFF);
-    bytes_to_store[1] = (unsigned char)((number_of_chars >> 16) & 0xFF);
-    bytes_to_store[2] = (unsigned char)((number_of_chars >> 8) & 0xFF);
-    bytes_to_store[3] = (unsigned char)(number_of_chars & 0xFF);
-
-    //Write number of chars
-    writer.write_bytes(bytes_to_store, 4);
-
-    //Write text
-    writer.write_bytes(text, number_of_chars);
-
-    //Store image
-    writer.finish(output_img_path);
-}
-
-
 /*!
 @method read_stego.
 @abstract Opens the stego image, recovers the text encoded in the last significant bit of the concerning bytes,
@@ -135,32 +69,22 @@ and creates a text file with it.
 @param outputTextName: The path of the text file to create with the stego text Extracted.
 @param k: Number of LSBs to use.
 */
-void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
-    LSBReader reader = LSBReader(BMPImage(stego_img_path), k);
+void read_stego_from_file(
+    char* stego_img_path,
+    char* output_text_path,
+    unsigned int lsb_to_use
+) {
+    BMPImage stego_img = BMPImage(stego_img_path);
 
-    //Extract the number of characters to read;
-    unsigned char bytes_extracted[4];
-    reader.read_bytes(bytes_extracted, 4);
-    unsigned int amount_of_chars = ((unsigned int)bytes_extracted[0] << 24) | ((unsigned int)bytes_extracted[1] << 16) | ((unsigned int)bytes_extracted[2] << 8) | (unsigned int)bytes_extracted[3];
+    unsigned char* text = StegoEncoder::read_stego(
+        stego_img,
+        lsb_to_use
+    );
 
-    //Debug text
-    printf("\n.......text extracted.......\n\n");
-    //
+    create_file_and_write(output_text_path, text);
 
-    //Read text
-    unsigned char text[amount_of_chars+1];
-    reader.read_bytes(text, amount_of_chars);
-    text[amount_of_chars] = '\0';
-
-    //Debug text
-    printf("\n.......output preview.......\n\n");
-    printf("%s\n", text);
-    //
-
-    //Store text
-    create_file_and_write(outputTextPath, text);
+    free(text);
 }
-
 
 /*!
 @method write_stego.
@@ -171,33 +95,31 @@ void read_stego(char* stego_img_path, char* outputTextPath, unsigned int k) {
 @params amount_of_chars: The amount of characters to hide.
 @param k: Number of LSBs to use.
 */
-void write_stego(char* inputText, char* input_img, char* outputImg, unsigned int amount_of_chars, unsigned int k) {
+unsigned int write_stego_to_file(
+    char* input_text_path,
+    char* cover_img_path,
+    char* stego_img_path,
+    unsigned int amount_of_chars,
+    unsigned int max_lsb_to_use
+) {
+    unsigned char* input_text = (unsigned char*) malloc(sizeof(char)*(amount_of_chars+1));
+    read_text(input_text_path, input_text, amount_of_chars);
+    input_text[amount_of_chars] = '\0';
 
-    unsigned char* text = (unsigned char*)malloc(sizeof(char)*(amount_of_chars+1));
-    unsigned int text_size = read_text(inputText, text, amount_of_chars);
-    text[amount_of_chars] = '\0';
+    BMPImage cover_img = BMPImage(cover_img_path);
 
-    int min_lsb = determine_min_amount_of_lsb(input_img, amount_of_chars);
+    unsigned int lsb_used = StegoEncoder::write_stego(
+        input_text,
+        cover_img,
+        amount_of_chars,
+        max_lsb_to_use
+    );
 
-    switch (min_lsb) {
-        case -1:
-            printf("fatal: not enough space in image\n");
-            exit(EXIT_FAILURE);
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-            write_stego_in_lbs(input_img, outputImg, text_size, text, k);
-            break;
-        default:
-            printf("write_stego with amount of significant bits:%d - not implemented\n", min_lsb);
-            exit(EXIT_FAILURE);
-    }
-    free(text);
+    cover_img.save_image(stego_img_path);
+
+    free(input_text);
+
+    return lsb_used;
 }
 
 /*!
@@ -231,12 +153,19 @@ int main(int argc, char **argv) {
     }
 
     char* input_text_path  = argv[3];
-    char* imput_img_path   = argv[4];
+    char* cover_img_path   = argv[4];
     char* output_text_path = argv[5];
-    char* output_img_path  = argv[6];
+    char* stego_img_path   = argv[6];
 
-    write_stego(input_text_path, imput_img_path, output_img_path, amount_of_chars, k);
-    read_stego(output_img_path, output_text_path, k);
+    unsigned int lsb_used = write_stego_to_file(
+        input_text_path,
+        cover_img_path,
+        stego_img_path,
+        amount_of_chars,
+        k
+    );
+
+    read_stego_from_file(stego_img_path, output_text_path, lsb_used);
 
     return 0;
 }

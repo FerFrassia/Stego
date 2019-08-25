@@ -4,12 +4,14 @@ LD=ld
 RM=rm -f
 CFLAGS=-g -Wall
 CXXFLAGS=-g -Wall
-LDFLAGS=-lm
+LDFLAGS=-g -lm
 
 EXECS=stego metrics
 
-STEGO_SRCS=stego.cpp BMPImage/BMPImage.cpp LSBStream/LSBStream.cpp \
- LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
+STEGO_SRCS=stego.cpp \
+	BMPImage/BMPImage.cpp \
+	StegoEncoder/StegoEncoder.cpp \
+	LSBStream/LSBStream.cpp LSBStream/LSBReader.cpp LSBStream/LSBWriter.cpp
 STEGO_OBJS=$(subst .cpp,.o,$(STEGO_SRCS))
 
 METRICS_SRCS=metrics.cpp
