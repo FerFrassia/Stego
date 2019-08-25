@@ -44,7 +44,7 @@ void BMPImage::save_image(char* output_path) {
 }
 
 unsigned int BMPImage::get_image_size() {
-  return image->img_header.biSizeImage;
+  return image->img_header.biHeight * image->img_header.biWidth;
 }
 
 void BMPImage::open_image(char* image_path) {

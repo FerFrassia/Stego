@@ -72,7 +72,7 @@ int determine_min_amount_of_lsb(
   unsigned int number_of_chars
 ) {
     double d_chars  = (double) number_of_chars;
-    double img_size = (double) image.get_image_size();
+    double img_size = (double) image.get_image_size() * sizeof(bmp_pixel);
 
     int min_lsb = -1;
     for (double i = 1; i <= 8; ++i) {
