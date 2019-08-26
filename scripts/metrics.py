@@ -53,7 +53,7 @@ for cover_image_name in cover_image_names:
         "value": float(metric_result),
       }
       metrics_data_points.append(data_point)
-    
+
     # Efficacy
     subprocess.check_output(read_command(True))
     with open(output_text_path, "r") as output_file:
@@ -66,7 +66,7 @@ for cover_image_name in cover_image_names:
         "value": ratio,
       }
       efficacy_data_points.append(data_point)
-    
+
     # Time measurements for writing and reading
     for i in range(0, time_repetitions):
       write_output = bytes.decode(subprocess.check_output(write_command))
