@@ -8,7 +8,7 @@ input_text_path = "../tests/TheHobbit.txt"
 stego_image_path = "../output/stego.bmp"
 output_text_path = "../output/text.txt"
 
-cover_image_names = ["n01", "n02", "t01", "t02", "s01", "s02"]
+cover_image_names = ["n01", "n02", "t01", "t02", "s01", "s02", "p01"]
 
 metrics_executable = "../src/metrics"
 metrics = ["mse", "psnr", "ssim"]
